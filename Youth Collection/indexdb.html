@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IndexedDB</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        #title{
+            text-align: center;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            color: limegreen;
+            font-weight: bolder;
+            font-size: xx-large;
+        }
+        #bt {
+            background-color: limegreen;
+            color: white;
+            font-weight: bolder;
+            font-size: 20px;
+            border-radius: 10px;
+            border: none;
+            width: 20%;
+            height: 50px;
+            margin: 20px 20px 40px 620px;
+            cursor: pointer;
+        }
+        #tb{
+            width: 70%;
+            border: 1px solid limegreen;
+            margin: auto;
+        }
+        #tableBody{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="index.html">
+          <h2>Youth Collection</h2>
+        </a>
+        <div class="main-sec">
+          <a href="index.html">Home</a>
+          <a href="localstorage.html">LocalStorage</a>
+          <a href="sessionstorage.html">SessionStorage</a>
+          <a href="indexdb.html">IndexedDB</a><br />
+        </div>
+        <a href="cart.html">
+          <div class="cart">
+            <i class="bi bi-cart2"></i>
+            <div id="cartAmount" class="cartAmount">0</div>
+          </div>
+        </a>
+      </div>
+    <h2 id="title">IndexedDB</h2>
+    <button id="bt" onclick="addData()">Add Data</button>
+    <table id="tb"  border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+    <footer>
+        <div>Copyright by Youth Collection</div>
+      </footer>
+    <script>
+        const dbName = 'myDatabase';
+        const dbVersion = 1;
+        const storeName = 'myStore';
+        const request = window.indexedDB.open(dbName, dbVersion);
+        request.onerror = function (event) {
+            console.error("Error opening database:", event.target.errorCode);
+        };
+        request.onupgradeneeded = function (event) {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(storeName)) {
+                const store = db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+                store.createIndex('name', 'name', { unique: false });
+                store.createIndex('email', 'email', { unique: true });
+            }
+        };
+        request.onsuccess = function (event) {
+            const db = event.target.result;
+            displayData(db);
+        };
+        function addData() {
+            const name = prompt("Enter name:");
+            const email = prompt("Enter email:");
+
+            const transaction = request.result.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+
+            const data = { name, email };
+            const addRequest = store.add(data);
+
+            addRequest.onsuccess = function () {
+                console.log("Data added successfully");
+                displayData(request.result);
+            };
+
+            addRequest.onerror = function () {
+                console.error("Error adding data");
+            };
+        }
+        function displayData(db) {
+            const transaction = db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = "";
+            const request = store.openCursor();
+            request.onsuccess = function (event) {
+                const cursor = event.target.result;
+                if (cursor) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${cursor.value.id}</td><td>${cursor.value.name}</td><td>${cursor.value.email}</td>`;
+                    tableBody.appendChild(row);
+                    cursor.continue();
+                }
+            };
+        }
+    </script>
+</body>
+</html>

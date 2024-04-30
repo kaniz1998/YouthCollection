@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Session Storage</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" />
+    <style>
+      .container {
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      button {
+        background-color: limegreen;
+        color: black;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+        border-radius: 10px;
+        margin-top: 10px;
+      }
+      #task-list table {
+        margin-top: 20px;
+        align-items: center;
+        width: 100%;
+      }
+      th,
+      td {
+        box-sizing: border-box;
+        border: 1px solid limegreen;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <a href="index.html">
+        <h2>Youth Collection</h2>
+      </a>
+      <div class="main-sec">
+        <a href="index.html">Home</a>
+        <a href="localstorage.html">LocalStorage</a>
+        <a href="sessionstorage.html">SessionStorage</a>
+        <a href="indexdb.html">IndexedDB</a><br />
+      </div>
+      <a href="cart.html">
+        <div class="cart">
+          <i class="bi bi-cart2"></i>
+          <div id="cartAmount" class="cartAmount">0</div>
+        </div>
+      </a>
+    </div>
+    <div class="container">
+      <h1 style="text-align: center; color: limegreen">Session Storage</h1>
+      <form id="crud-form">
+        <label for="id">ID:</label>
+        <input type="number" id="id" placeholder="ID" required /><br>
+        <label for="name">Name:</label>
+        <input type="text" id="name" placeholder="Name" required /><br>
+        <label for="tsp">TSP:</label>
+        <input type="text" id="tsp" placeholder="TSP" required /><br>
+        <button type="submit" id="save">Save</button>
+      </form>
+      <div id="task-list">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>TSP</th>
+              <th>Update</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <footer>
+        <div>Copyright by Youth Collection</div>
+      </footer>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("crud-form");
+        const idInput = document.getElementById("id");
+        const nameInput = document.getElementById("name");
+        const tspInput = document.getElementById("tsp");
+        const taskTableBody = document.querySelector("#task-list table tbody");
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const taskId = parseInt(idInput.value);
+          const taskName = nameInput.value;
+          const taskTSP = tspInput.value;
+
+          if (
+            !isNaN(taskId) &&
+            taskName.trim() !== "" &&
+            taskTSP.trim() !== ""
+          ) {
+            const existingTask = getTaskById(taskId);
+
+            if (existingTask) {
+              updateTask(taskId, taskName, taskTSP);
+              alert("updated successfully!");
+            } else {
+              const task = { id: taskId, name: taskName, tsp: taskTSP };
+              saveTask(task);
+              addTaskToTable(task);
+              alert("Added successfully!");
+            }
+            idInput.value = "";
+            nameInput.value = "";
+            tspInput.value = "";
+          }
+        });
+        loadTasks();
+
+        function saveTask(task) {
+          const tasks = JSON.parse(sessionStorage.getItem("tasks")) || [];
+          tasks.push(task);
+          sessionStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+          const tasks = JSON.parse(sessionStorage.getItem("tasks")) || [];
+          tasks.forEach(addTaskToTable);
+        }
+
+        function addTaskToTable(task) {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${task.id}</td><td>${task.name}</td><td>${task.tsp}</td><td><button onclick="updateTaskForm(${task.id}, '${task.name}', '${task.tsp}')">Update</button></td><td><button onclick="deleteTask(${task.id})">Delete</button></td>`;
+          taskTableBody.appendChild(row);
+        }
+
+        window.updateTaskForm = function (taskId, taskName, taskTSP) {
+          idInput.value = taskId;
+          nameInput.value = taskName;
+          tspInput.value = taskTSP;
+        };
+
+        function updateTask(taskId, taskName, taskTSP) {
+          const tasks = JSON.parse(sessionStorage.getItem("tasks")) || [];
+          for (let i = 0; i < tasks.length; i++) {
+            if (tasks[i].id === taskId) {
+              tasks[i].name = taskName;
+              tasks[i].tsp = taskTSP;
+              break;
+            }
+          }
+          sessionStorage.setItem("tasks", JSON.stringify(tasks));
+          taskTableBody.innerHTML = "";
+          tasks.forEach(addTaskToTable);
+        }
+
+        window.deleteTask = function (taskId) {
+          const tasks = JSON.parse(sessionStorage.getItem("tasks")) || [];
+          const updatedTasks = tasks.filter((task) => task.id !== taskId);
+          sessionStorage.setItem("tasks", JSON.stringify(updatedTasks));
+          taskTableBody.innerHTML = "";
+          updatedTasks.forEach(addTaskToTable);
+          alert("Are you sure to delete it ?");
+        };
+
+        function getTaskById(taskId) {
+          const tasks = JSON.parse(sessionStorage.getItem("tasks")) || [];
+          return tasks.find((task) => task.id === taskId);
+        }
+      });
+    </script>
+  </body>
+</html>
